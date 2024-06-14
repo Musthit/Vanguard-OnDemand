@@ -1,0 +1,50 @@
+@echo off
+
+echo Checking if VGC Service is enabled...
+sc query vgc | find "STATE" | find "STOPPED"
+if %ERRORLEVEL% EQU 0 (
+    echo VGC Service is disabled. Enabling it...
+    sc config vgc start=auto
+    echo Waiting for 2 seconds to apply the change...
+    timeout /t 2 >NUL
+    echo Starting VGC Service...
+    sc start vgc
+) else (
+    echo VGC Service is enabled. Starting...
+    sc start vgc
+)
+
+echo Checking if Vanguard Tray is disabled...
+tasklist /FI "IMAGENAME eq vgtray.exe" 2>NUL | find /I "vgtray.exe" >NUL
+if %ERRORLEVEL% NEQ 0 (
+    echo Vanguard Tray is not running. Starting...
+    start "" "C:\Program Files\Riot Vanguard\vgtray.exe"
+) else (
+    echo Vanguard Tray is already running.
+)
+
+echo Starting Riot Client...
+start "" "D:\Games\Riot Games\Riot Client\RiotClientServices.exe"
+echo Waiting for League of Legends to start...
+timeout /t 60
+
+:check
+tasklist /FI "IMAGENAME eq LeagueClient.exe" 2>NUL | find /I "LeagueClient.exe" >NUL
+if %ERRORLEVEL% EQU 0 (
+    echo League of Legends is still running...
+    timeout /t 10
+    goto check
+) else (
+    echo League of Legends has closed. Stopping Vanguard...
+    echo Vanguard has been stopped.
+
+    echo Disabling VGC Service...
+    sc stop vgc >NUL
+    sc config vgc start=disabled >NUL
+    echo VGC Service has been disabled.
+
+    pause
+
+    taskkill /F /IM vgtray.exe >NUL 2>&1
+    echo Success: terminated "vgtray.exe" process.
+)
