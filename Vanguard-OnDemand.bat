@@ -25,7 +25,6 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo Iniciando Riot Client...
 start "" "D:\Games\Riot Games\Riot Client\RiotClientServices.exe
-
 echo Esperando a que League of Legends inicie...
 timeout /t 60
 
